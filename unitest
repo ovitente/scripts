@@ -1,0 +1,4 @@
+#!/bin/bash
+
+DISPLAY=:0 notify-send -t 2000 -i 3sync_light "Unison" "Sync in progress."
+unison x7 && if tail ~/.unison/unison.log -n1 | grep 'complete' ; then DISPLAY=:0 notify-send -t 7000 -i 3sync_light "Unison" "Sync Complete"; else DISPLAY=:0 notify-send -t 10000 -i important "Unison" "`tail ~/.unison/unison.log -n7`"; fi

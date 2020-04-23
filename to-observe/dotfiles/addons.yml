@@ -1,0 +1,91 @@
+---
+
+- hosts: all
+  vars:
+    ansible_python_interpreter: '/usr/bin/env python3'
+
+  tasks:
+    - composer:
+        global_command: yes
+        command: require
+      ignore_errors: yes
+      # become: yes
+      with_items:
+        - "squizlabs/php_codesniffer=*"
+        - "mkusher/padawan=*"
+        - "phpmd/phpmd=*"
+      tags:
+        - all
+        - php
+
+    - pip:
+        # extra_args: "--user"
+        name: '{{ item }}'
+        state: latest
+      with_items:
+        - neovim
+        - pylint
+        - ansible-lint
+        - yamllint
+        - bashate
+        - sexpdata
+        - websocket-client
+        - jedi
+        - psutil
+        - setproctitle
+      tags:
+        - all
+
+    - gem: name={{ item }} state=latest
+      # become: yes
+      ignore_errors: yes
+      with_items:
+        - rake
+        - neovim
+        - mdl
+        - haml-lint
+        - sqlint
+        - rubocop
+        - language_server
+        - fastri
+        - slim_lint
+      tags:
+        - all
+        - ruby
+
+    - npm: name={{ item }} global=yes state=latest
+      become: yes
+      ignore_errors: yes
+      with_items:
+        - prettier
+        - typescript
+        - typings
+        - tern
+        - pug-lint
+        - livedown
+        - js-yaml
+        - stylelint
+        - js-beautify
+        - jsonlint
+        - eslint
+        - babel-eslint
+        - eslint-plugin-jest
+        - eslint-plugin-flowtype
+        - eslint-plugin-import
+        - eslint-import-resolver-webpack
+        - eslint-plugin-markdown
+        - eslint-plugin-jsx-a11y
+        - eslint-config-airbnb
+        - eslint-config-airbnb-base
+        - eslint-plugin-react
+      tags:
+        - all
+        - eslint
+
+    - copy:
+        src: ./files/eslintrc
+        dest: ~/.eslintrc
+        backup: yes
+      tags:
+        - all
+        - eslint

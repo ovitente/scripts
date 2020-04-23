@@ -1,0 +1,41 @@
+#!/bin/bash
+clear
+cd
+list="
+https://www.youtube.com/watch?v=DqD8HAwUVP8 
+https://www.youtube.com/watch?v=VgOs_OkYT-w 
+https://www.youtube.com/watch?v=dUyo48NeCes 
+https://www.youtube.com/watch?v=TtMic7bJdgU 
+https://www.youtube.com/watch?v=0TqI9BRGAFU 
+https://www.youtube.com/watch?v=6y4vto1ABf0 
+https://www.youtube.com/watch?v=8ZiJsC11UDc 
+"
+n=0
+
+function CheckVar {
+  if [ -f $video ] || [ -f $audio ]; then 
+    echo "There is no input file."
+    exit 1
+	else
+		echo "Files are ok $video and $audio"
+  fi
+}
+
+for i in $list; do
+	n=$(($n + 1))
+	echo -e "\n\n\n==============[ #$n  ]=================\n\n\n"
+	echo "==============[ $(youtube-dl --get-filename --format 140 $i) ]================="
+  youtube-dl  --format 135 $i;
+  youtube-dl  --format 140 $i;
+	
+	echo "==============[ Getting variables ]================="
+	audio=$(youtube-dl --get-filename --format 140 $i)	
+	video=$(youtube-dl --get-filename --format 135 $i)	
+	echo "==============[ Checking variables exist ]================="
+	echo -e "$video\n$audio"
+	CheckVar
+	echo "==============[ Merging  ]================="
+  echo -e "$video with $audio"i
+  ffmpeg -i "$video" -i "$audio" -c:v copy -c:a aac -strict experimental $n.mp4
+	rm -rf $video $audio
+done

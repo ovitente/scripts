@@ -1,0 +1,13 @@
+# set your user tokens as environment variables, such as ~/.secrets
+# See the README for examples.
+[color]
+  ui = auto
+
+[alias]
+  up = pull --rebase
+  co = checkout
+  ci = commit
+  st = status
+  br = branch
+  hist = log --graph --decorate --oneline
+  lt = git describe --abbrev=0 --tags
