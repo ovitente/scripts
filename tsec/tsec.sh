@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
-SECRETS_DIR="gcp-secrets"
+SECRETS_DIR="teck-secrets"
+
+function Init {
+  mkdir -p $HOME/.bin
+  [[ $(basename $(pwd)) != "tsec" ]] && { echo "Execute init only from directory with real tsec.sh"; exit 1; }
+  ln -sf $(pwd)/tsec.sh $HOME/.bin/tsec
+}
 
 function EncryptSafetyCheck {
 
@@ -20,11 +26,10 @@ function EncryptFiles {
   echo -e "---------------\n- ENCRYPTING FILES"
 
   EncryptSafetyCheck
-  FILES_LIST="$(find $1 -type f ! -name 'gcpsec.sh' -type d ! -name 'smt')" 
+  FILES_LIST="$(find $1 -type f)" 
   count=""
 
   for PLAIN_FILE in $FILES_LIST; do
-    [ -f $PLAIN_FILE.enc ] && echo "File $(basename $PLAIN_FILE is already encrypted.)"
     echo " - $PLAIN_FILE > $PLAIN_FILE.enc"
     gcloud kms encrypt \
    --location global \
@@ -97,11 +102,13 @@ EOF
 }
 
 case $1 in
+  init)
+    Init;;
   get)
     PullFiles;;
   save)
     PushFiles;;
   *)
-    echo -e "Usage: \n get - get secrets to the current dir\n save - upload secrets to the bucket\n";;
+    echo -e "Usage: \n init - make symlink. U better do before any other actions. \n get - get secrets to the current dir\n save - upload secrets to the bucket\n";;
 esac
 echo " "
