@@ -2,10 +2,11 @@
 
 # Cherri-pick to master
 
-echo -e "Script will applly git cherry-pick to all provided branches."
+echo -e "Script will applly git cherry-pick to all provided branches.\n  DON'T FORGET TO DO GIT PULL ON THE SOURCE BRANCH"
+read answer
 
 # branches=(dev-new qa-new stage-new qa stage master)
-branches=($1)
+branches=($@)
 [[ -z $branches ]] && { echo " Please provide branch as first argument."; exit 1; }
 
 printf "%sEnter commit ID: "
