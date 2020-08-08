@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+clear
+
+source lib/messages.sh || exit 1 # Importing messages functions
+
+DIRS_LIST="
+audio
+dist
+docs
+pictures
+projects"
+
+function DirectoryPreCheck {
+  for directory in $DIRS_LIST
+  [[ -d $directory ]] || mkdir $directory # is dir exist
+
+  # is dir under $USER write ownage and permissions
+  dir_perm=$(stat -f "%OLp" $directory)
+  dir_owner=$(stat --format=%U tfplan)
+  if [[ dir_perm != 775 ] && [ dir_owner != $USER ]]; then
+    ErrorMessage "Dir permissions should be 755, got [ $dir_perm ]\nDir owner should be $USER, got [ $dir_owner ]"
+    exit 1
+  fi
+
+  # is it empty?
+  # test "$(ls -A $directory)" || SubJobMessage "Directory [ $directory ] is empty. Continue."
+  if [ ! "$(ls -A $directory)" ]
+then
+  SubJobMessage "Directory [ $directory ] is empty. Continue."
+else
+  ErrorMessage "Directory [ $directory] is not empty. Exit."
+  exit 1
+fi
+
+  # is it already mounted. Maybe previous check will fail if it is not empty and ovbioysly mounted
+
+}
+
+function VolumeHealthCheck {
+  # is it writable
+
+}
+
+function VolumeMount {
+  # use mount_smbfs -W workgroup //user@SERVER/folder ./mntpoint
+  # or without -W workgroup
+
+}
+
+function VolumeUmount {
+  umount ./mntpoint # or discutil umount ./mntpoint # maybe with FORCE FLAG
+
+}
+
+function Sync {
+  rsync command
+
+}

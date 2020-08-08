@@ -22,11 +22,21 @@ EOF
 
 }
 
+
+function SetTargetProject {
+  echo "Please choose proper project to access to"
+
+  local projects project
+  gcloud config set project $(gcloud projects list | fzf --height 50% --header-lines=1 --reverse --multi --cycle | awk '{print $1}')
+}
+
+SetTargetProject
+
 function EncryptFiles {
   echo -e "---------------\n- ENCRYPTING FILES"
 
   EncryptSafetyCheck
-  FILES_LIST="$(find $1 -type f)" 
+  FILES_LIST="$(find $1 -type f)"
   count=""
 
   for PLAIN_FILE in $FILES_LIST; do
@@ -44,14 +54,15 @@ function EncryptFiles {
 
 }
 
-function DecryptFiles { 
+function DecryptFiles {
   echo -e "---------------\n- DECRYPTING FILES"
 
-  FILES_LIST="$(find $1 -type f -name '*.enc')" 
+  FILES_LIST="$(find $1 -type f -name '*.enc')"
   count=""
 
   for ENCRYPTED_FILE in $FILES_LIST; do
-    PLAIN_FILE=${ENCRYPTED_FILE%.enc}
+    PLAIN_FILE=${ENCRYPTED_FILE%.enc} # % symbols removes extension after it
+    # echo "PLAIN FILE IS [ $PLAIN_FILE ]"
     echo " - $ENCRYPTED_FILE"
     gcloud kms decrypt \
    --location global \
@@ -78,7 +89,7 @@ EOF
     gsutil -m rsync -d -r gs://$SECRETS_DIR ${SECRETS_DIR}_enc
     DecryptFiles ${SECRETS_DIR}_enc
   echo -e "---------------\n- COPYING ${SECRETS_DIR}_enc > $SECRETS_DIR"
-    cp -r ${SECRETS_DIR}_enc/* $SECRETS_DIR 
+    cp -r ${SECRETS_DIR}_enc/* $SECRETS_DIR
   echo -e "---------------\n- REMOVING ${SECRETS_DIR}_enc"
     rm -rf ${SECRETS_DIR}_enc
 }
