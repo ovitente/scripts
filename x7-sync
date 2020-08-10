@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
+# The current versions is created for using Samba share. But in next it will use SSH for it. scp command.
 clear
 
 source lib/messages.sh || exit 1 # Importing messages functions
 
 SMB_LOGIN="$USER"
-SMB_SERVER="wh13.x7systems.com:8001"
+SMB_SERVER="wh13.x7systems.com:8002"
 
 DIR_ROOT="$HOME/x7"
 DIR_MOUNT="$DIR_ROOT/x7-sync-temp-dir"
 
-DIRS_LIST="
-audio
+DIRS_LIST="music
 dist
 docs
 pictures
@@ -25,6 +25,14 @@ function Init {
   mkdir -p $DIR_MOUNT
 }
 
+function VolumeUmount {
+  local volume=$1
+  cd $DIR_MOUNT
+  JobInitMessage "Umounting"
+  # SubJobMessage "TEST. Umounting $volume"
+  diskutil umount $DIR_MOUNT/$volume
+}
+
 function Preparing {
   local volume=$1
   cd $DIR_MOUNT
@@ -32,10 +40,7 @@ function Preparing {
 
   # SubJobMessage "Check for directories existence."
   # rm -rf $volume
-  if [ ! -d $volume ]; then
-    # SubJobMessage "Directory $volume does not exist. Creating"
-    mkdir -p $DIR_MOUNT/$volume
-  fi
+  mkdir -p $DIR_MOUNT/$volume
 
   # SubJobMessage "Check for the correct permissions."
   # dir_perm=$(stat -c '%a' $volume)
@@ -48,6 +53,9 @@ function Preparing {
 
   # SubJobMessage "Check if volume not empty."
   # $(touch $DIR_ROOT/test_file; echo $?) != 0
+  if [ "$(ls -A $volume; echo $?)" != 0 ]; then
+    VolumeUmount $volume
+  fi
   if [ "$(ls -A $volume; echo $?)" != 0 ]; then
     ErrorMessage "Directory [ $volume] is not empty. Exit."
     exit 1
@@ -62,9 +70,7 @@ function VolumeMount {
   JobInitMessage "Mounting"
   cd $DIR_MOUNT
   # SubJobMessage "$volume"
-  mkdir -p $DIR_MOUNT/$volume
-  # mount_smbfs //$SMB_LOGIN@SMB_SERVER/$volume $DIR_MOUNT/$volume
-  # SubJobMessage "TEST. Mounting $volume"
+  [ $(mount_smbfs //${SMB_LOGIN}@${SMB_SERVER}/$volume $volume; echo $?) != 0 ] && { ErrorMessage "Can't mount volume."; exit 1; }
 }
 
 function VolumeHealthCheck {
@@ -90,20 +96,12 @@ function Sync {
   # SubJobMessage "Sync job complete. Add aftercheck to this part to be sure everything is really synced."
 }
 
-function VolumeUmount {
-  local volume=$1
-  cd $DIR_MOUNT
-  JobInitMessage "Umounting"
-  # SubJobMessage "TEST. Umounting $volume"
-  # discutil umount $DIR_MOUNT/$volume
-  # rm -rf $DIR_MOUNT/$i
-}
 
 function Cleaning {
   JobInitMessage "Removing volume temp directory."
   local volume=$1
   cd $DIR_MOUNT
-  rm -r $volume
+  rmdir  $volume
 }
 
 #----------
