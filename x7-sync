@@ -4,8 +4,8 @@ clear
 
 source lib/messages.sh || exit 1 # Importing messages functions
 
-SMB_LOGIN="$USER"
-SMB_SERVER="wh13.x7systems.com:8002"
+REMOTE_USER="$USER"
+SYNC_SERVER="wh13.x7systems.com:8002"
 
 DIR_ROOT="$HOME/x7"
 DIR_MOUNT="$DIR_ROOT/x7-sync-temp-dir"
@@ -70,7 +70,7 @@ function VolumeMount {
   JobInitMessage "Mounting"
   cd $DIR_MOUNT
   # SubJobMessage "$volume"
-  [ $(mount_smbfs //${SMB_LOGIN}@${SMB_SERVER}/$volume $volume; echo $?) != 0 ] && { ErrorMessage "Can't mount volume."; exit 1; }
+  [ $(mount_smbfs //${REMOTE_USER}@${SYNC_SERVER}/$volume $volume; echo $?) != 0 ] && { ErrorMessage "Can't mount volume."; exit 1; }
 }
 
 function VolumeHealthCheck {
@@ -92,10 +92,10 @@ function Sync {
   local volume=$1
   cd $DIR_MOUNT
   JobInitMessage "Sync"
-  # rsync command
+
+  # rsync -azvh $DIR_ROOT/$volume ${REMOTE_USER}/${SYNC_SERVER}/$volume
   # SubJobMessage "Sync job complete. Add aftercheck to this part to be sure everything is really synced."
 }
-
 
 function Cleaning {
   JobInitMessage "Removing volume temp directory."
