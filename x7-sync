@@ -3,6 +3,12 @@ clear
 
 source lib/messages.sh || exit 1 # Importing messages functions
 
+SMB_LOGIN="$USER"
+SMB_SERVER="wh13.x7systems.com:8001"
+
+DIR_ROOT="$HOME/x7"
+DIR_MOUNT="$DIR_ROOT/x7-sync-temp-dir"
+
 DIRS_LIST="
 audio
 dist
@@ -10,49 +16,105 @@ docs
 pictures
 projects"
 
-function DirectoryPreCheck {
-  for directory in $DIRS_LIST
-  [[ -d $directory ]] || mkdir $directory # is dir exist
+function Init {
+  WelcomeMessage "
+  Starting sync procedures.
+  "
+  JobInitMessage "Creating temporary directory for sync.
+   $DIR_MOUNT "
+  mkdir -p $DIR_MOUNT
+}
 
-  # is dir under $USER write ownage and permissions
-  dir_perm=$(stat -f "%OLp" $directory)
-  dir_owner=$(stat --format=%U tfplan)
-  if [[ dir_perm != 775 ] && [ dir_owner != $USER ]]; then
-    ErrorMessage "Dir permissions should be 755, got [ $dir_perm ]\nDir owner should be $USER, got [ $dir_owner ]"
+function Preparing {
+  local volume=$1
+  cd $DIR_MOUNT
+  JobInitMessage "Preparing"
+
+  # SubJobMessage "Check for directories existence."
+  # rm -rf $volume
+  if [ ! -d $volume ]; then
+    # SubJobMessage "Directory $volume does not exist. Creating"
+    mkdir -p $DIR_MOUNT/$volume
+  fi
+
+  # SubJobMessage "Check for the correct permissions."
+  # dir_perm=$(stat -c '%a' $volume)
+  dir_owner=$(stat --format=%U $volume)
+  # if [ $dir_perm != 775 ] && [ $dir_owner != $USER ]; then
+  if [ $dir_owner != $USER ]; then
+    ErrorMessage "Dir owner should be $USER, got [ $dir_owner ]"
     exit 1
   fi
 
-  # is it empty?
-  # test "$(ls -A $directory)" || SubJobMessage "Directory [ $directory ] is empty. Continue."
-  if [ ! "$(ls -A $directory)" ]
-then
-  SubJobMessage "Directory [ $directory ] is empty. Continue."
-else
-  ErrorMessage "Directory [ $directory] is not empty. Exit."
-  exit 1
-fi
-
-  # is it already mounted. Maybe previous check will fail if it is not empty and ovbioysly mounted
-
-}
-
-function VolumeHealthCheck {
-  # is it writable
+  # SubJobMessage "Check if volume not empty."
+  # $(touch $DIR_ROOT/test_file; echo $?) != 0
+  if [ "$(ls -A $volume; echo $?)" != 0 ]; then
+    ErrorMessage "Directory [ $volume] is not empty. Exit."
+    exit 1
+  # else
+    # SubJobMessage "Directory [ $volume ] is empty. Continue."
+  fi
 
 }
 
 function VolumeMount {
-  # use mount_smbfs -W workgroup //user@SERVER/folder ./mntpoint
-  # or without -W workgroup
-
+  local volume=$1
+  JobInitMessage "Mounting"
+  cd $DIR_MOUNT
+  # SubJobMessage "$volume"
+  mkdir -p $DIR_MOUNT/$volume
+  # mount_smbfs //$SMB_LOGIN@SMB_SERVER/$volume $DIR_MOUNT/$volume
+  # SubJobMessage "TEST. Mounting $volume"
 }
 
-function VolumeUmount {
-  umount ./mntpoint # or discutil umount ./mntpoint # maybe with FORCE FLAG
+function VolumeHealthCheck {
+  local volume=$1
+  cd $DIR_MOUNT/$volume
+  JobInitMessage "Checking if directory is writable. Creating test_file inside $DIR_ROOT"
 
+  if [[ $( touch test_file; echo $?) = 0 ]]; then
+    rm -rf $test_file
+    # SubJobMessage "OK"
+  else
+    ErrorMessage "Directory $DIR_ROOT/$volume is not writable."
+  fi
+
+  # [[ $(touch $DIR_ROOT/test_file; echo $?) != 0 ]] && ErrorMessage "Directory $DIR_ROOT is not writable." ||
 }
 
 function Sync {
-  rsync command
-
+  local volume=$1
+  cd $DIR_MOUNT
+  JobInitMessage "Sync"
+  # rsync command
+  # SubJobMessage "Sync job complete. Add aftercheck to this part to be sure everything is really synced."
 }
+
+function VolumeUmount {
+  local volume=$1
+  cd $DIR_MOUNT
+  JobInitMessage "Umounting"
+  # SubJobMessage "TEST. Umounting $volume"
+  # discutil umount $DIR_MOUNT/$volume
+  # rm -rf $DIR_MOUNT/$i
+}
+
+function Cleaning {
+  JobInitMessage "Removing volume temp directory."
+  local volume=$1
+  cd $DIR_MOUNT
+  rm -r $volume
+}
+
+#----------
+Init
+for volume in $DIRS_LIST; do
+  echo -e "\n----------------------------\n"
+  echo -e "[ $volume ]"
+  Preparing $volume
+  VolumeMount $volume
+  Sync $volume
+  VolumeUmount $volume
+  Cleaning $volume
+done
+
