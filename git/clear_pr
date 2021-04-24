@@ -1,0 +1,8 @@
+REPOSITORY_PATH=$(git rev-parse --show-toplevel)
+REPOSITORY_NAME=$(basename $REPOSITORY_PATH)
+
+cd $REPOSITORY_PATH
+git add . && git commit -a -m "save"
+rm -rf ${REPOSITORY_NAME}-backup
+cp -r $REPOSITORY_NAME ${REPOSITORY_NAME}-backup
+cd -
