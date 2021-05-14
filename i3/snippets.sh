@@ -10,5 +10,7 @@ circleci config validate config.yaml
 cat FILE | base64 -w0 | xclip -selection clipboard
 '
 
-choise=$(echo -n "${COMMANDS_LIST}" | rofi -dmenu -p "Choose fast cmd")
-echo -n "$choise" | xclip -selection clipboard
+choise=$(echo -n "${COMMANDS_LIST}" | fzf )
+# choise=$(echo -n "${COMMANDS_LIST}" | rofi -dmenu -p "Choose fast cmd")
+echo -n "$choise" | pbcopy
+# pbpaste
